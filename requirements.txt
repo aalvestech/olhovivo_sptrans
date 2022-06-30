@@ -1,0 +1,6 @@
+PythonTurtle
+requests
+pandas
+pyarrow
+python-dotenv
+pathlib

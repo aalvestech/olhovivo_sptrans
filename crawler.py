@@ -3,6 +3,7 @@ from time import strftime
 from turtle import clear
 from unicodedata import name
 from urllib import response
+from pytz import HOUR
 import requests
 import pandas as pd
 import json
@@ -12,6 +13,7 @@ from dotenv import load_dotenv, find_dotenv
 import os
 import pathlib as Path
 import glob
+from datetime import datetime, timezone, timedelta as dt
 
 load_dotenv()
 
@@ -33,6 +35,9 @@ def _get(endpoint):
     data = response.json()
 
     return data
+
+def _remove_duplicates(list_df:list):
+          return list(set(list_df))
 
 def get_bus_position(line_id : int) -> pd.DataFrame:
 
@@ -62,16 +67,15 @@ def get_bus_position(line_id : int) -> pd.DataFrame:
            'sentido_operacao', 'detino_linha', 'origem_linha',
            'qtd_veiculos', 'prefixo_veiculo', 'flag_acessibilidade',
            'data_ref_api', 'geo_loc_y', 'geo_loc_x'])
-     # TODO - Verificar bug da hora, esta dando 3 horas a mais.
      df_bus_position['ano_part'] = pd.to_datetime("today").strftime("%Y")
      df_bus_position['mes_part'] = pd.to_datetime("today").strftime("%m")
      df_bus_position['dia_part'] = pd.to_datetime("today").strftime("%d")
-     df_bus_position['hora_part'] = pd.to_datetime("now").strftime("%H:%M:%S")
+ 
+     
+     df_bus_position.to_parquet('C:\\repos\\olhovivo_sptrans\\data/bus_position', partition_cols=['ano_part', 'mes_part', 'dia_part'])
+     #df_bus_position.to_parquet('/home/ubuntu/repos/olhovivo_sptrans/data/bus_position', partition_cols=['ano_part', 'mes_part', 'dia_part'])
 
-     #df_bus_position.to_parquet('C:\\repos\\sptrans_olhovivo\\data/bus_postion.parque', partition_cols=['ano_part', 'mes_part', 'dia_part'])
-     #df_bus_position.to_parquet('/home/ubuntu/repos/sptrans_olhovivo/data', partition_cols=['ano_part', 'mes_part', 'dia_part'])
-
-     return print(df_bus_position)
+     return df_bus_position
 
 def get_garage(company_id, line_id):
 
@@ -88,9 +92,7 @@ def get_company():
      df_company = pd.json_normalize(json.loads(df_company.to_json(orient='records')))
      df_company.columns = ('hr_ref', 'codigo_empresa_area', 'codigo_area', 'codigo_ref_empresa', 'nome_empresa') 
 
-     # print(df_company)
-
-     return df_company
+     return print(df_company)
 
 def get_stops(stop_id):
 
@@ -120,15 +122,10 @@ def get_bus_runner_stops(runner_id):
 
 def get_garage():
 
-     # garage = _get('/Posicao/Garagem?codigoEmpresa=37&codigoLinha=0')
-     # df_garage = pd.DataFrame(garage)
      lista = get_company()
      lista_cod_empresa = lista['codigo_ref_empresa'].to_list()
 
-     def remove_duplicates(lista_cod_empresa):
-          return list(set(lista_cod_empresa))
-
-     lista_cod_empresa = remove_duplicates(lista_cod_empresa)
+     lista_cod_empresa = _remove_duplicates(lista_cod_empresa)
 
      for empresa in lista_cod_empresa:
           
@@ -137,7 +134,7 @@ def get_garage():
           with open('C:\\repos\\olhovivo_sptrans\\data\\tmp\\company{}_.json'.format(empresa), 'w') as f:
                json.dump(garage, f)
 
-     paths = glob.glob("C:\\repos\\sptrans_olhovivo\\data\\tmp\\*.json")
+     paths = glob.glob("C:\\repos\\olhovivo_sptrans\\data\\tmp\\*.json")
      df_garage = pd.DataFrame([pd.read_json(p, typ="series") for p in paths])
      df_garage = pd.json_normalize(json.loads(df_garage.to_json(orient='records'))).explode('l')
      df_garage = pd.json_normalize(json.loads(df_garage.to_json(orient='records')))
@@ -149,11 +146,58 @@ def get_garage():
 
      return print(df_garage)
 
+# def get_predict(stop_id, line_id):
+
+#      stops_list = get_stops('')
+#      stops_list_code = stops_list['codigo_parada']
+#      stops_list_code = _remove_duplicates(stops_list_code)
+
+#      lines_list = get_line
+
+#      for stops in stops_list_code:
+          
+#           predict = _get('/Previsao?codigoParada={}&codigoLinha={}'.format(stop_id, line_id))
+          
+#           with open('C:\\repos\\olhovivo_sptrans\\data\\tmp\\company{}_.json'.format(empresa), 'w') as f:
+#                json.dump(garage, f)
+
+#      return
+
+def get_lines():
+
+     df_bus_position = get_bus_position('')
+     lines_list_code = df_bus_position['letreiro_completo'].to_list()
+     lines_list_code = _remove_duplicates(lines_list_code)
+
+     df_lines= pd.DataFrame({'cl': pd.Series(dtype='int'),
+                             'lc': pd.Series(dtype='bool'),
+                             'lt': pd.Series(dtype='float'),
+                             'sl': pd.Series(dtype='int'),
+                             'tl': pd.Series(dtype='str'),
+                             'tp': pd.Series(dtype='float'),
+                             'ts': pd.Series(dtype='float')
+                             })
+
+
+     for lines_code in lines_list_code:
+
+          lines = _get('/Linha/Buscar?termosBusca={}'.format(lines_code))
+
+          df_concatenador = pd.DataFrame(lines)
+
+          df_lines = pd.concat([df_lines, df_concatenador])
+
+     df_lines = df_lines.reset_index().drop(['index'], axis=1)
+
+     df_lines
+
+     return df_lines
 
 auth()
-get_bus_position('')
-get_company()
-get_stops('')
-get_bus_runner()
-get_bus_runner_stops('9')
-get_garage()
+# get_bus_position('')
+#get_company()
+# get_stops('')
+# get_bus_runner()
+# get_bus_runner_stops('9')
+# get_garage()
+print(get_lines())

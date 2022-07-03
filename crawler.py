@@ -101,7 +101,7 @@ def get_stops(stop_id):
      df_stops = pd.json_normalize(json.loads(df_stops.to_json(orient='records')))
      df_stops.columns = ('codigo_parada', 'nome_parada', 'endereco_parada', 'geo_loc_y', 'geo_loc_x')
      
-     return print(df_stops) 
+     return df_stops
 
 def get_bus_runner():
 
@@ -146,22 +146,6 @@ def get_garage():
 
      return print(df_garage)
 
-# def get_predict(stop_id, line_id):
-
-#      stops_list = get_stops('')
-#      stops_list_code = stops_list['codigo_parada']
-#      stops_list_code = _remove_duplicates(stops_list_code)
-
-#      lines_list = get_line
-
-#      for stops in stops_list_code:
-          
-#           predict = _get('/Previsao?codigoParada={}&codigoLinha={}'.format(stop_id, line_id))
-          
-#           with open('C:\\repos\\olhovivo_sptrans\\data\\tmp\\company{}_.json'.format(empresa), 'w') as f:
-#                json.dump(garage, f)
-
-#      return
 
 def get_lines():
 
@@ -193,6 +177,75 @@ def get_lines():
 
      return df_lines
 
+
+
+def get_predict():
+
+     '''
+          [string]hr Horário de referência da geração das informações
+          {}p Representa um ponto de parada onde: 
+          [int]cp código identificador da parada 
+          [string]np Nome da parada 
+          [double]py Informação de latitude da localização do veículo 
+          [double]px Informação de longitude da localização do veículo 
+          [{}]l Relação de linhas localizadas onde: 
+          [string]c Letreiro completo 
+          [int]cl Código identificador da linha 
+          [int]sl Sentido de operação onde 1 significa de Terminal Principal para Terminal Secundário e 2 de Terminal Secundário para Terminal Principal 
+          [string]lt0 Letreiro de destino da linha 
+          [string]lt1 Letreiro de origem da linha [int]qv Quantidade de veículos localizados 
+          [{}]vs Relação de veículos localizados onde: 
+          [int]p Prefixo do veículo 
+          [string]t Horário previsto para chegada do veículo no ponto de parada relacionado
+          [bool]a Indica se o veículo é (true) ou não (false) acessível para pessoas com deficiência
+          [string]ta Indica o horário universal (UTC) em que a localização foi capturada. Essa informação está no padrão ISO 8601 
+          [double]py Informação de latitude da localização do veículo
+          [double]px Informação de longitude da localização do veículo
+     '''
+
+
+     # df_stops = get_stops('')
+     # df_stops = df_stops['codigo_parada']
+     # df_stops = _remove_duplicates(df_stops)
+
+     # df_lines = get_lines()
+     # df_lines = df_lines['cl']
+     # df_lines = _remove_duplicates(df_lines)
+
+
+     # for stops, lines in zip(df_stops, df_lines):
+          
+     # predict = _get('/Previsao?codigoParada=340015329&codigoLinha=0')
+
+     # with open('C:\\repos\\olhovivo_sptrans\\data\\tmp\\predict\\predict_{}_{}.json'.format(340015329), 'w') as f:
+     #       json.dump(predict, f)
+
+     # paths = glob.glob("C:\\repos\\olhovivo_sptrans\\data\\tmp\\predict\\*.json")
+     # df_predict = pd.DataFrame([pd.read_json(p, typ="series") for p in paths])
+     # df_predict = pd.json_normalize(json.loads(df_predict.to_json(orient='records')))#.explode('l')
+     # df_predict = pd.json_normalize(json.loads(df_predict.to_json(orient='records')))
+     # df_predict = pd.json_normalize(json.loads(df_predict.to_json(orient='records'))).explode('l.vs')
+     # df_predict = pd.json_normalize(json.loads(df_predict.to_json(orient='records')))
+     # df_garage.columns = ('hr_ref', 'letreiro_completo', 'identificador_linha', 'sentid_linha',
+     #                         'destino_linha', 'origem_linha', 'quantidade_veiculos', 'prefixo_veiculo',
+     #                         'flag_acessibilidade', 'data_ref_api', 'geo_loc_y', 'geo_loc_x')
+
+     df_stops = get_stops('')
+
+     df_stops = df_stops['codigo_parada'].to_list()
+     
+     for stops in df_stops:
+
+          predict = _get('/Previsao?codigoParada={}&codigoLinha=0'.format(stops))
+          with open('C:\\repos\\olhovivo_sptrans\\data\\tmp\\predict\\predict_{}.json'.format(stops), 'w') as f:
+               json.dump(predict, f)
+
+     return 
+          
+
+
+
+
 auth()
 # get_bus_position('')
 #get_company()
@@ -200,4 +253,5 @@ auth()
 # get_bus_runner()
 # get_bus_runner_stops('9')
 # get_garage()
-print(get_lines())
+# print(get_lines())
+print(get_predict())

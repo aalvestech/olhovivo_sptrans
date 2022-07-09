@@ -29,15 +29,31 @@ def auth() -> str:
 
      return print(response.text)
 
-def _get(endpoint):
+def _get(endpoint) -> json:
 
     response = session.get(url + endpoint)
     data = response.json()
 
     return data
 
-def _remove_duplicates(list_df:list):
+def _remove_duplicates(list_df:list) -> list:
           return list(set(list_df))
+
+def write_json_files(endpoint, df, path):
+
+     for item in df:
+
+          data = _get(endpoint.format(item))
+     
+     with open(path.format(item), 'w') as f:
+          json.dump(data, f)
+
+def read_json_files(path) -> pd.DataFrame:
+
+     paths = glob.glob(path)
+     df = pd.DataFrame([pd.read_json(p, typ="series") for p in paths])
+
+     return df
 
 def get_bus_position(line_id : int) -> pd.DataFrame:
 
@@ -76,12 +92,6 @@ def get_bus_position(line_id : int) -> pd.DataFrame:
      #df_bus_position.to_parquet('/home/ubuntu/repos/olhovivo_sptrans/data/bus_position', partition_cols=['ano_part', 'mes_part', 'dia_part'])
 
      return df_bus_position
-
-def get_garage(company_id, line_id):
-
-     bus_in_garage = _get('/Posicao/Garagem?codigoEmpresa={}&codigoLinha={}'.format(company_id, line_id))
-
-     return print(bus_in_garage)
 
 def get_company():
 
@@ -162,24 +172,17 @@ def get_lines():
                              'ts': pd.Series(dtype='float')
                              })
 
-
      for lines_code in lines_list_code:
 
           lines = _get('/Linha/Buscar?termosBusca={}'.format(lines_code))
-
           df_concatenador = pd.DataFrame(lines)
-
           df_lines = pd.concat([df_lines, df_concatenador])
 
      df_lines = df_lines.reset_index().drop(['index'], axis=1)
 
-     df_lines
-
      return df_lines
 
-
-
-def get_predict():
+def get_predict() -> pd.DataFrame:
 
      '''
           [string]hr Horário de referência da geração das informações
@@ -203,44 +206,18 @@ def get_predict():
           [double]px Informação de longitude da localização do veículo
      '''
 
-
-     # df_stops = get_stops('')
-     # df_stops = df_stops['codigo_parada']
-     # df_stops = _remove_duplicates(df_stops)
-
-     # df_lines = get_lines()
-     # df_lines = df_lines['cl']
-     # df_lines = _remove_duplicates(df_lines)
-
-
-     # for stops, lines in zip(df_stops, df_lines):
-          
-     # predict = _get('/Previsao?codigoParada=340015329&codigoLinha=0')
-
-     # with open('C:\\repos\\olhovivo_sptrans\\data\\tmp\\predict\\predict_{}_{}.json'.format(340015329), 'w') as f:
-     #       json.dump(predict, f)
-
-     # paths = glob.glob("C:\\repos\\olhovivo_sptrans\\data\\tmp\\predict\\*.json")
-     # df_predict = pd.DataFrame([pd.read_json(p, typ="series") for p in paths])
-     # df_predict = pd.json_normalize(json.loads(df_predict.to_json(orient='records')))#.explode('l')
-     # df_predict = pd.json_normalize(json.loads(df_predict.to_json(orient='records')))
-     # df_predict = pd.json_normalize(json.loads(df_predict.to_json(orient='records'))).explode('l.vs')
-     # df_predict = pd.json_normalize(json.loads(df_predict.to_json(orient='records')))
-     # df_garage.columns = ('hr_ref', 'letreiro_completo', 'identificador_linha', 'sentid_linha',
-     #                         'destino_linha', 'origem_linha', 'quantidade_veiculos', 'prefixo_veiculo',
-     #                         'flag_acessibilidade', 'data_ref_api', 'geo_loc_y', 'geo_loc_x')
-
      df_stops = get_stops('')
-
      df_stops = df_stops['codigo_parada'].to_list()
-     
-     for stops in df_stops:
 
-          predict = _get('/Previsao?codigoParada={}&codigoLinha=0'.format(stops))
-          with open('C:\\repos\\olhovivo_sptrans\\data\\tmp\\predict\\predict_{}.json'.format(stops), 'w') as f:
-               json.dump(predict, f)
+     write_json_files('/Previsao?codigoParada={}&codigoLinha=0', df_stops, 'C:\\repos\\olhovivo_sptrans\\data\\tmp\\predict\\predict_{}.json')
+     df_predict = read_json_files("C:\\repos\\olhovivo_sptrans\\data\\tmp\\predict\\*.json")
 
-     return 
+     df_predict = pd.json_normalize(json.loads(df_predict.to_json(orient='records'))).explode('p.l')
+     df_predict = pd.json_normalize(json.loads(df_predict.to_json(orient='records')))
+     df_predict = pd.json_normalize(json.loads(df_predict.to_json(orient='records'))).explode('p.l.vs')
+     df_predict = pd.json_normalize(json.loads(df_predict.to_json(orient='records')))
+
+     return df_predict
           
 
 

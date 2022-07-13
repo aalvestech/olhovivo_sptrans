@@ -78,11 +78,6 @@ def get_bus_position(line_id : int) -> pd.DataFrame:
      df_bus_position = pd.DataFrame(bus_position)
      df_bus_position = pd.json_normalize(json.loads(df_bus_position.to_json(orient='records'))).explode('l.vs')
      df_bus_position = pd.json_normalize(json.loads(df_bus_position.to_json(orient='records')))
-     df_bus_position.columns = (
-          ['hr_ref', 'letreiro_completo', 'id_linha',
-           'sentido_operacao', 'detino_linha', 'origem_linha',
-           'qtd_veiculos', 'prefixo_veiculo', 'flag_acessibilidade',
-           'data_ref_api', 'geo_loc_y', 'geo_loc_x'])
      df_bus_position['ano_part'] = pd.to_datetime("today").strftime("%Y")
      df_bus_position['mes_part'] = pd.to_datetime("today").strftime("%m")
      df_bus_position['dia_part'] = pd.to_datetime("today").strftime("%d")
@@ -100,7 +95,6 @@ def get_company():
      df_company = pd.DataFrame(company)
      df_company = pd.json_normalize(json.loads(df_company.to_json(orient='records'))).explode('e.e')
      df_company = pd.json_normalize(json.loads(df_company.to_json(orient='records')))
-     df_company.columns = ('hr_ref', 'codigo_empresa_area', 'codigo_area', 'codigo_ref_empresa', 'nome_empresa') 
 
      return df_company
 
@@ -109,7 +103,6 @@ def get_stops(stop_id):
      stops = _get('/Parada/Buscar?termosBusca={}'.format(stop_id))
      df_stops = pd.DataFrame(stops)
      df_stops = pd.json_normalize(json.loads(df_stops.to_json(orient='records')))
-     df_stops.columns = ('codigo_parada', 'nome_parada', 'endereco_parada', 'geo_loc_y', 'geo_loc_x')
      
      return df_stops
 
@@ -118,7 +111,6 @@ def get_bus_runner():
      bus_runner = _get('/Corredor')
      bus_runner = pd.DataFrame(bus_runner)
      bus_runner = pd.json_normalize(json.loads(bus_runner.to_json(orient='records')))
-     bus_runner.columns = ('codigo_corredor', 'nome_corredor')
 
      return print(bus_runner)
 
@@ -126,14 +118,13 @@ def get_bus_runner_stops(runner_id):
 
      bus_runner_stops = _get('/Parada/BuscarParadasPorCorredor?codigoCorredor={}'.format(runner_id))
      df_bus_runner_stops = pd.DataFrame(bus_runner_stops)
-     df_bus_runner_stops.columns = ('codigo_corredor_parada', 'nome_corredor_parada', 'endereco_corredor_parada', 'geo_loc_y', 'geo_loc_x')
 
      return print(df_bus_runner_stops)
 
 def get_garage():
 
      lista = get_company()
-     lista_cod_empresa = lista['codigo_ref_empresa'].to_list()
+     lista_cod_empresa = lista['e.e.c'].to_list()
 
      lista_cod_empresa = _remove_duplicates(lista_cod_empresa)
 
@@ -149,9 +140,6 @@ def get_garage():
      df_garage = pd.json_normalize(json.loads(df_garage.to_json(orient='records')))
      df_garage = pd.json_normalize(json.loads(df_garage.to_json(orient='records'))).explode('l.vs')
      df_garage = pd.json_normalize(json.loads(df_garage.to_json(orient='records')))
-     # df_garage.columns = ('hr_ref', 'letreiro_completo', 'identificador_linha', 'sentid_linha',
-     #                         'destino_linha', 'origem_linha', 'quantidade_veiculos', 'prefixo_veiculo',
-     #                         'flag_acessibilidade', 'data_ref_api', 'geo_loc_y', 'geo_loc_x')
 
      return df_garage
 

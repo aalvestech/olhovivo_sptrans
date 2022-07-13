@@ -102,7 +102,7 @@ def get_company():
      df_company = pd.json_normalize(json.loads(df_company.to_json(orient='records')))
      df_company.columns = ('hr_ref', 'codigo_empresa_area', 'codigo_area', 'codigo_ref_empresa', 'nome_empresa') 
 
-     return print(df_company)
+     return df_company
 
 def get_stops(stop_id):
 
@@ -144,17 +144,16 @@ def get_garage():
           with open('C:\\repos\\olhovivo_sptrans\\data\\tmp\\company{}_.json'.format(empresa), 'w') as f:
                json.dump(garage, f)
 
-     paths = glob.glob("C:\\repos\\olhovivo_sptrans\\data\\tmp\\*.json")
-     df_garage = pd.DataFrame([pd.read_json(p, typ="series") for p in paths])
+     df_garage = read_json_files('C:\\repos\\olhovivo_sptrans\\data\\tmp\\*.json')
      df_garage = pd.json_normalize(json.loads(df_garage.to_json(orient='records'))).explode('l')
      df_garage = pd.json_normalize(json.loads(df_garage.to_json(orient='records')))
      df_garage = pd.json_normalize(json.loads(df_garage.to_json(orient='records'))).explode('l.vs')
      df_garage = pd.json_normalize(json.loads(df_garage.to_json(orient='records')))
-     df_garage.columns = ('hr_ref', 'letreiro_completo', 'identificador_linha', 'sentid_linha',
-                             'destino_linha', 'origem_linha', 'quantidade_veiculos', 'prefixo_veiculo',
-                             'flag_acessibilidade', 'data_ref_api', 'geo_loc_y', 'geo_loc_x')
+     # df_garage.columns = ('hr_ref', 'letreiro_completo', 'identificador_linha', 'sentid_linha',
+     #                         'destino_linha', 'origem_linha', 'quantidade_veiculos', 'prefixo_veiculo',
+     #                         'flag_acessibilidade', 'data_ref_api', 'geo_loc_y', 'geo_loc_x')
 
-     return print(df_garage)
+     return df_garage
 
 
 def get_lines():
@@ -229,6 +228,6 @@ auth()
 # get_stops('')
 # get_bus_runner()
 # get_bus_runner_stops('9')
-# get_garage()
+print(get_garage())
 # print(get_lines())
-print(get_predict())
+# print(get_predict())

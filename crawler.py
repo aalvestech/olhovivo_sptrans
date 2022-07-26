@@ -3,6 +3,7 @@ from time import strftime
 from turtle import clear
 from unicodedata import name
 from urllib import response
+from numpy import append
 from pytz import HOUR
 import requests
 import pandas as pd
@@ -45,14 +46,21 @@ def write_json_files(endpoint, df, path):
 
           data = _get(endpoint.format(item))
      
-     with open(path.format(item), 'w') as f:
-          json.dump(data, f)
+          with open(path.format(item), 'w') as f:
+               json.dump(data, f)
 
 def read_json_files(path) -> pd.DataFrame:
 
      paths = glob.glob(path)
-     df = pd.DataFrame([pd.read_json(p, typ="series") for p in paths])
+     # df = pd.DataFrame([pd.read_json(p, typ="series") for p in paths])
+     df = pd.DataFrame()
+     for path in paths:
 
+          df_aux = pd.read_json(path)
+          
+          df = pd.concat(([df, df_aux]), ignore_index = True)
+     
+     
      return df
 
 def get_bus_position(line_id : int) -> pd.DataFrame:
@@ -125,17 +133,11 @@ def get_garage():
 
      lista = get_company()
      lista_cod_empresa = lista['e.e.c'].to_list()
-
      lista_cod_empresa = _remove_duplicates(lista_cod_empresa)
 
-     for empresa in lista_cod_empresa:
-          
-          garage = _get('/Posicao/Garagem?codigoEmpresa={}&codigoLinha=0'.format(empresa))
-          
-          with open('C:\\repos\\olhovivo_sptrans\\data\\tmp\\company{}_.json'.format(empresa), 'w') as f:
-               json.dump(garage, f)
+     write_json_files('/Posicao/Garagem?codigoEmpresa={}&codigoLinha=0', lista_cod_empresa, 'C:\\repos\\olhovivo_sptrans\\data\\tmp\\garage\\garage{}.json')
 
-     df_garage = read_json_files('C:\\repos\\olhovivo_sptrans\\data\\tmp\\*.json')
+     df_garage = read_json_files('C:\\repos\\olhovivo_sptrans\\data\\tmp\\garage\\*.json')
      df_garage = pd.json_normalize(json.loads(df_garage.to_json(orient='records'))).explode('l')
      df_garage = pd.json_normalize(json.loads(df_garage.to_json(orient='records')))
      df_garage = pd.json_normalize(json.loads(df_garage.to_json(orient='records'))).explode('l.vs')
@@ -147,25 +149,12 @@ def get_garage():
 def get_lines():
 
      df_bus_position = get_bus_position('')
-     lines_list_code = df_bus_position['letreiro_completo'].to_list()
+     lines_list_code = df_bus_position['l.c'].to_list()
      lines_list_code = _remove_duplicates(lines_list_code)
+     
+     write_json_files('/Linha/Buscar?termosBusca={}', lines_list_code, 'C:\\repos\\olhovivo_sptrans\\data\\tmp\\lines\\lines{}.json')
 
-     df_lines= pd.DataFrame({'cl': pd.Series(dtype='int'),
-                             'lc': pd.Series(dtype='bool'),
-                             'lt': pd.Series(dtype='float'),
-                             'sl': pd.Series(dtype='int'),
-                             'tl': pd.Series(dtype='str'),
-                             'tp': pd.Series(dtype='float'),
-                             'ts': pd.Series(dtype='float')
-                             })
-
-     for lines_code in lines_list_code:
-
-          lines = _get('/Linha/Buscar?termosBusca={}'.format(lines_code))
-          df_concatenador = pd.DataFrame(lines)
-          df_lines = pd.concat([df_lines, df_concatenador])
-
-     df_lines = df_lines.reset_index().drop(['index'], axis=1)
+     df_lines = read_json_files('C:\\repos\\olhovivo_sptrans\\data\\tmp\\lines\\*.json')
 
      return df_lines
 
@@ -207,15 +196,12 @@ def get_predict() -> pd.DataFrame:
      return df_predict
           
 
-
-
-
 auth()
 # get_bus_position('')
 #get_company()
 # get_stops('')
 # get_bus_runner()
 # get_bus_runner_stops('9')
-print(get_garage())
-# print(get_lines())
+# print(get_garage())
+print(get_lines())
 # print(get_predict())

@@ -40,26 +40,25 @@ def _get(endpoint) -> json:
 def _remove_duplicates(list_df:list) -> list:
           return list(set(list_df))
 
-def write_json_files(endpoint, df, path):
+def write_json_files(endpoint, df, path) -> None:
 
      for item in df:
 
           data = _get(endpoint.format(item))
      
           with open(path.format(item), 'w') as f:
+               
                json.dump(data, f)
-
+               
 def read_json_files(path) -> pd.DataFrame:
 
      paths = glob.glob(path)
-     # df = pd.DataFrame([pd.read_json(p, typ="series") for p in paths])
      df = pd.DataFrame()
+
      for path in paths:
 
           df_aux = pd.read_json(path)
-          
-          df = pd.concat(([df, df_aux]), ignore_index = True)
-     
+          df = pd.concat(([df, df_aux]), ignore_index = False)
      
      return df
 
@@ -117,17 +116,19 @@ def get_stops(stop_id):
 def get_bus_runner():
 
      bus_runner = _get('/Corredor')
-     bus_runner = pd.DataFrame(bus_runner)
-     bus_runner = pd.json_normalize(json.loads(bus_runner.to_json(orient='records')))
+     df_bus_runner = pd.DataFrame(bus_runner)
 
-     return print(bus_runner)
+     return df_bus_runner
 
-def get_bus_runner_stops(runner_id):
+def get_bus_runner_stops():
 
-     bus_runner_stops = _get('/Parada/BuscarParadasPorCorredor?codigoCorredor={}'.format(runner_id))
-     df_bus_runner_stops = pd.DataFrame(bus_runner_stops)
+     runner_stops = get_bus_runner()
+     runner_stops = runner_stops['cc']
 
-     return print(df_bus_runner_stops)
+     write_json_files('/Parada/BuscarParadasPorCorredor?codigoCorredor={}', runner_stops, 'C:\\repos\\olhovivo_sptrans\\data\\tmp\\bus_runners_stops\\bus_runner_stop{}.json')
+     df_runners_stops = read_json_files('C:\\repos\\olhovivo_sptrans\\data\\tmp\\bus_runners_stops\\*.json')
+
+     return df_runners_stops
 
 def get_garage():
 
@@ -137,14 +138,17 @@ def get_garage():
 
      write_json_files('/Posicao/Garagem?codigoEmpresa={}&codigoLinha=0', lista_cod_empresa, 'C:\\repos\\olhovivo_sptrans\\data\\tmp\\garage\\garage{}.json')
 
-     df_garage = read_json_files('C:\\repos\\olhovivo_sptrans\\data\\tmp\\garage\\*.json')
+     paths = glob.glob('C:\\repos\\olhovivo_sptrans\\data\\tmp\\garage\\*.json')
+
+     df_garage = pd.DataFrame([pd.read_json(p, typ = "Series") for p in paths])
+
+     df_garage = pd.json_normalize(json.loads(df_garage.to_json(orient='records')))
      df_garage = pd.json_normalize(json.loads(df_garage.to_json(orient='records'))).explode('l')
      df_garage = pd.json_normalize(json.loads(df_garage.to_json(orient='records')))
      df_garage = pd.json_normalize(json.loads(df_garage.to_json(orient='records'))).explode('l.vs')
      df_garage = pd.json_normalize(json.loads(df_garage.to_json(orient='records')))
 
      return df_garage
-
 
 def get_lines():
 
@@ -183,10 +187,13 @@ def get_predict() -> pd.DataFrame:
      '''
 
      df_stops = get_stops('')
-     df_stops = df_stops['codigo_parada'].to_list()
+     df_stops = df_stops['cp'].to_list()
 
      write_json_files('/Previsao?codigoParada={}&codigoLinha=0', df_stops, 'C:\\repos\\olhovivo_sptrans\\data\\tmp\\predict\\predict_{}.json')
-     df_predict = read_json_files("C:\\repos\\olhovivo_sptrans\\data\\tmp\\predict\\*.json")
+
+     paths = glob.glob('C:\\repos\\olhovivo_sptrans\\data\\tmp\\predict\\*.json')
+
+     df_predict = pd.DataFrame([pd.read_json(p, typ = "Series") for p in paths])
 
      df_predict = pd.json_normalize(json.loads(df_predict.to_json(orient='records'))).explode('p.l')
      df_predict = pd.json_normalize(json.loads(df_predict.to_json(orient='records')))
@@ -197,11 +204,11 @@ def get_predict() -> pd.DataFrame:
           
 
 auth()
-# get_bus_position('')
-#get_company()
-# get_stops('')
-# get_bus_runner()
-# get_bus_runner_stops('9')
-# print(get_garage())
+print(get_bus_position(''))
+print(get_company())
+print(get_stops(''))
+print(get_bus_runner())
+print(get_bus_runner_stops())
+print(get_garage())
 print(get_lines())
-# print(get_predict())
+print(get_predict())

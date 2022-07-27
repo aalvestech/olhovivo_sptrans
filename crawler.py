@@ -1,5 +1,6 @@
 from operator import index
 from time import strftime
+from tokenize import String
 from turtle import clear
 from unicodedata import name
 from urllib import response
@@ -20,6 +21,10 @@ load_dotenv()
 
 session = requests.Session()
 url = 'http://api.olhovivo.sptrans.com.br/v2.1/'
+
+# TODO - TRANSLATE ALL THE CODE TO ENGLISH
+# TODO - INSERT DOCSTRING IN ALL FUNCTIONS
+# TODO - INSERT TYPED VARIABLES IN FUNCTION PARAMETERS
 
 def auth() -> str:
 
@@ -122,16 +127,18 @@ def get_bus_runner():
 
 def get_bus_runner_stops():
 
+     path = 'C:\\repos\\olhovivo_sptrans\\data\\tmp\\bus_runners_stops\\bus_runner_stop{}.json'
+     endpoint = '/Parada/BuscarParadasPorCorredor?codigoCorredor={}'
      runner_stops = get_bus_runner()
      runner_stops = runner_stops['cc']
 
-     write_json_files('/Parada/BuscarParadasPorCorredor?codigoCorredor={}', runner_stops, 'C:\\repos\\olhovivo_sptrans\\data\\tmp\\bus_runners_stops\\bus_runner_stop{}.json')
+     write_json_files(endpoint, runner_stops, path)
      df_runners_stops = read_json_files('C:\\repos\\olhovivo_sptrans\\data\\tmp\\bus_runners_stops\\*.json')
 
      return df_runners_stops
 
 def get_garage():
-
+# TODO - ANALYZE WHY WE CAN'T USE THE READ_JSON_FILES FUNCTION AND IMPLEMENT A SOLUTION
      lista = get_company()
      lista_cod_empresa = lista['e.e.c'].to_list()
      lista_cod_empresa = _remove_duplicates(lista_cod_empresa)

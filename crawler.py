@@ -1,4 +1,5 @@
 from operator import index
+import string
 from time import strftime
 from tokenize import String
 from turtle import clear
@@ -28,6 +29,11 @@ url = 'http://api.olhovivo.sptrans.com.br/v2.1/'
 
 def auth() -> str:
 
+     '''
+     Esta função é responsavel por autenticar nossa aplicação junto a SPTRANS utilizando um token de usuário
+     A função deve retornar um [bool], sendo TRUE para autenticado ou FALSE para não autenticado
+     '''
+
      TOKEN_API_OLHOVIVO = os.getenv("TOKEN_API_OLHOVIVO")
 
      endpoint = 'Login/Autenticar?token={}'.format(TOKEN_API_OLHOVIVO)
@@ -35,17 +41,24 @@ def auth() -> str:
 
      return print(response.text)
 
-def _get(endpoint) -> json:
 
-    response = session.get(url + endpoint)
-    data = response.json()
+def _get(endpoint : str) -> json:
 
-    return data
+     '''
+     Essa função é responsavel por trazer os dados da API Olho Vivo passando a URL da API mais a rota (endpoint)
+     A função deve retornar um objeto [Json] com o conteúdo do endpoint solicitado.
+     '''
 
-def _remove_duplicates(list_df:list) -> list:
+     response = session.get(url + endpoint)
+     data = response.json()
+     return data
+
+
+def _remove_duplicates(list_df : list) -> list:
           return list(set(list_df))
 
-def write_json_files(endpoint, df, path) -> None:
+
+def write_json_files(endpoint : str, df : pd.DataFrame, path : str) -> None:
 
      for item in df:
 
@@ -54,8 +67,9 @@ def write_json_files(endpoint, df, path) -> None:
           with open(path.format(item), 'w') as f:
                
                json.dump(data, f)
-               
-def read_json_files(path) -> pd.DataFrame:
+
+
+def read_json_files(path : str) -> pd.DataFrame:
 
      paths = glob.glob(path)
      df = pd.DataFrame()
@@ -92,7 +106,7 @@ def get_lines() -> pd.DataFrame:
      return df_lines
 
 
-def get_stops(stop_id):
+def get_stops(stop_id : str) -> pd.DataFrame:
 
      '''
      [int]cp Código identificador da parada
@@ -109,7 +123,7 @@ def get_stops(stop_id):
      return df_stops
 
 
-def get_bus_runner_stops():
+def get_bus_runner_stops() -> pd.DataFrame:
 
      '''
      [int]cp Código identificador da parada
@@ -129,7 +143,7 @@ def get_bus_runner_stops():
      return df_runners_stops
 
 
-def get_bus_runner():
+def get_bus_runner() -> pd.DataFrame:
 
      '''
      [int]cc Código identificador da corredor. Este é um código identificador único de cada corredor inteligente do sistema
@@ -141,7 +155,7 @@ def get_bus_runner():
      return df_bus_runner
 
 
-def get_company():
+def get_company() -> pd.DataFrame:
 
      '''
      [string]hr Horário de referência da geração das informações
@@ -195,7 +209,7 @@ def get_bus_position(line_id : int) -> pd.DataFrame:
      return df_bus_position
 
 
-def get_garage():
+def get_garage() -> pd.DataFrame:
 
      '''
      [string]hr Horário de referência da geração das informações 
